@@ -79,8 +79,6 @@
   .popup-type { font-size: 11px; padding: 2px 6px; border-radius: var(--radius-sm); display: inline-block; font-weight: 500; }
   .popup-type.rj { background: rgba(59,130,246,0.2); color: #60a5fa; }
   .popup-type.dr { background: rgba(249,115,22,0.2); color: #fb923c; }
-  .popup-detail { font-size: 11px; color: var(--color-text-muted); padding: 2px var(--space-3); }
-  .popup-detail strong { color: var(--color-text); }
   .site-popup { width: 230px; }
   .sp-header { display: flex; justify-content: space-between; align-items: flex-start; padding: 10px 12px 8px; gap: 8px; }
   .sp-name { font-weight: 700; font-size: 14px; color: var(--color-text); line-height: 1.2; }
@@ -201,22 +199,21 @@
 const SHEET_ID   = '1S8ag1NjIYaE4DvBC8I3J4bRICtF28WrMqIwyRFqPun0';
 const SHEET_NAME = 'Geral';
 
-// sheetKey = nome exato (lowercase) como aparece na 1ª coluna da planilha
-// Se omitido, usa o próprio 'name' em lowercase
+// sheetKey = sigla exata da 1ª coluna da planilha (nome_retransmissora)
 const SITES = [
-  { id:'s0',  name:'Sumaré',          sheetKey:'sumaré',           lat:-22.95012, lng:-43.23324, potencia:'18kW'   },
-  { id:'s1',  name:'Morin',           sheetKey:'morim',            lat:-22.53719, lng:-43.14558, potencia:'3kW'    },
-  { id:'s2',  name:'Mendanha',        sheetKey:'mendanha',         lat:-22.82244, lng:-43.51939, potencia:'1200W'  },
-  { id:'s3',  name:'São Gonçalo',     sheetKey:'são gonçalo',      lat:-22.82346, lng:-43.00665, potencia:'600W'   },
-  { id:'s4',  name:'Igreja da Pena',  sheetKey:'igreja da penna',  lat:-22.93983, lng:-43.34427, potencia:'400W'   },
-  { id:'s5',  name:'Nova Iguaçu',     sheetKey:'nova iguaçu',      lat:-22.72267, lng:-43.46298, potencia:'280W'   },
-  { id:'s6',  name:'Rio Sul',         sheetKey:'rio sul',          lat:-22.95517, lng:-43.17160, potencia:'200W'   },
-  { id:'s7',  name:'Bento Ribeiro',   sheetKey:'bento ribeiro',    lat:-22.87166, lng:-43.35837, potencia:'100W'   },
-  { id:'s8',  name:'Barra Sul',       sheetKey:'barra sul',        lat:-23.00470, lng:-43.42473, potencia:'100W'   },
-  { id:'s9',  name:'Itaguaí',         sheetKey:'itaguaí',          lat:-22.85961, lng:-43.76917, potencia:'80W'    },
-  { id:'s10', name:'Jardim Oceânico', sheetKey:'lake',             lat:-23.00544, lng:-43.31778, potencia:'100W'   },
-  { id:'s11', name:'Mangaratiba',     sheetKey:'mangaratiba',      lat:-22.97478, lng:-44.03720, potencia:'300W'   },
-  { id:'s12', name:'SBT',             sheetKey:'sbt/sumaré',       lat:-22.94906, lng:-43.22763, potencia:'100W'   },
+  { id:'s0',  name:'Sumaré',          sheetKey:'sum', lat:-22.95012, lng:-43.23324, potencia:'18kW'  },
+  { id:'s1',  name:'Morin',           sheetKey:'mor', lat:-22.53719, lng:-43.14558, potencia:'3kW'   },
+  { id:'s2',  name:'Mendanha',        sheetKey:'men', lat:-22.82244, lng:-43.51939, potencia:'1200W' },
+  { id:'s3',  name:'São Gonçalo',     sheetKey:'sgo', lat:-22.82346, lng:-43.00665, potencia:'600W'  },
+  { id:'s4',  name:'Igreja da Pena',  sheetKey:'pen', lat:-22.93983, lng:-43.34427, potencia:'400W'  },
+  { id:'s5',  name:'Nova Iguaçu',     sheetKey:'niu', lat:-22.72267, lng:-43.46298, potencia:'280W'  },
+  { id:'s6',  name:'Rio Sul',         sheetKey:'rsl', lat:-22.95517, lng:-43.17160, potencia:'200W'  },
+  { id:'s7',  name:'Bento Ribeiro',   sheetKey:'btr', lat:-22.87166, lng:-43.35837, potencia:'100W'  },
+  { id:'s8',  name:'Barra Sul',       sheetKey:'bsl', lat:-23.00470, lng:-43.42473, potencia:'100W'  },
+  { id:'s9',  name:'Itaguaí',         sheetKey:'ita', lat:-22.85961, lng:-43.76917, potencia:'80W'   },
+  { id:'s10', name:'Jardim Oceânico', sheetKey:'lak', lat:-23.00544, lng:-43.31778, potencia:'100W'  },
+  { id:'s11', name:'Mangaratiba',     sheetKey:'mng', lat:-22.97478, lng:-44.03720, potencia:'300W'  },
+  { id:'s12', name:'SBT',             sheetKey:'sbt', lat:-22.94906, lng:-43.22763, potencia:'100W'  },
 ];
 const COBERTURAS_RJ = [
   { id:'ID_0',  name:'Best Server Sumaré 18kW', isBestServer:true, bounds:[[-23.91338,-44.79006],[-21.81064,-41.97870]], file:'BestServerRJ.png' },
@@ -276,7 +273,7 @@ async function fetchSheetData() {
       const key = String(obj[cols[0]] || '').trim().toLowerCase();
       if (key) data[key] = obj;
     });
-    console.log('[Sheet] Carregado:', Object.keys(data).length, 'linhas |', Object.keys(data).join(', '));
+    console.log('[Sheet] OK:', Object.keys(data).length, 'linhas |', Object.keys(data).join(', '));
     return data;
   } catch(e) {
     console.warn('[Sheet] Falha:', e);
@@ -289,7 +286,7 @@ function fmtNum(v) {
   return isNaN(n) ? (v || '—') : n.toLocaleString('pt-BR');
 }
 function buildSitePopup(s, row) {
-  const tipo      = row?.Tipo            || '—';
+  const tipo      = row?.Tipo          || '—';
   const popBest   = row?.Pop_BestServ   ? fmtNum(row.Pop_BestServ)   : '—';
   const popSingle = row?.Pop_SingleServ ? fmtNum(row.Pop_SingleServ) : '—';
   const foto      = row?.Foto || '';
@@ -311,13 +308,11 @@ function buildSitePopup(s, row) {
 
 const BASE_URL = 'https://r4cs0u.github.io/dtvrj-mapa/imagens/';
 function makeOverlay(data, group){
-  const isBest     = !!data.isBestServer;
-  const fillColor  = group==='rj' ? '#3b82f6' : '#f97316';
-  const defOpacity = isBest ? 0.80 : 0.70;
-  opacityMap[data.id] = defOpacity;
-  const img = L.imageOverlay(BASE_URL+data.file, data.bounds, {opacity:defOpacity, interactive:true});
-  img.on('error', function(){
-    const rect = L.rectangle(data.bounds,{color:fillColor,weight:isBest?2.5:1.5,opacity:isBest?0.85:0.55,fillColor:fillColor,fillOpacity:isBest?0.18:0.10,dashArray:isBest?null:'4 4'});
+  const isBest=!!data.isBestServer, fillColor=group==='rj'?'#3b82f6':'#f97316', defOpacity=isBest?0.80:0.70;
+  opacityMap[data.id]=defOpacity;
+  const img=L.imageOverlay(BASE_URL+data.file,data.bounds,{opacity:defOpacity,interactive:true});
+  img.on('error',function(){
+    const rect=L.rectangle(data.bounds,{color:fillColor,weight:isBest?2.5:1.5,opacity:isBest?0.85:0.55,fillColor:fillColor,fillOpacity:isBest?0.18:0.10,dashArray:isBest?null:'4 4'});
     img.off(); img.remove(); layerMap[data.id]=rect;
   });
   const tl=group==='rj'?'Cobertura RJ':'Cobertura DR', tc=group==='rj'?'rj':'dr';
@@ -398,10 +393,9 @@ Object.assign(legend.style,{position:'absolute',bottom:'16px',right:'16px',zInde
 (async function init(){
   const sheetData = await fetchSheetData();
   SITES.forEach(s => {
-    // sheetKey define qual chave buscar na planilha (lowercase)
-    const key = (s.sheetKey || s.name).trim().toLowerCase();
+    const key = s.sheetKey.toLowerCase();
     const row = sheetData[key] || null;
-    if (!row) console.warn(`[Sheet] Sem dados para: "${s.name}" (chave: "${key}")`);
+    if (!row) console.warn(`[Sheet] Sem match: "${s.name}" (chave: "${key}")`);
     const m = L.marker([s.lat, s.lng], {icon: siteIcon('#ef4444')});
     m.bindPopup(buildSitePopup(s, row), {maxWidth: 260});
     m.on('click', () => showInfo(`<strong>${s.name}</strong><div class="info-coords">Lat: ${s.lat.toFixed(5)}<br>Lng: ${s.lng.toFixed(5)}</div>`));
