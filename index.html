@@ -35,9 +35,6 @@
   .header-sub { font-size: var(--text-xs); color: var(--color-text-muted); flex: 1; }
   .theme-btn { width: 32px; height: 32px; border-radius: var(--radius-md); background: var(--color-surface-2); border: 1px solid var(--color-border); color: var(--color-text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: color var(--transition), background var(--transition); flex-shrink: 0; }
   .theme-btn:hover { color: var(--color-text); background: var(--color-surface-3); }
-  .embed-hint { background: color-mix(in oklch, var(--color-primary) 10%, var(--color-surface)); border-bottom: 1px solid var(--color-primary-glow); padding: var(--space-2) var(--space-4); font-size: var(--text-xs); color: var(--color-primary); display: flex; align-items: center; gap: var(--space-2); flex-shrink: 0; }
-  .embed-hint-dismiss { margin-left: auto; cursor: pointer; opacity: 0.6; transition: opacity var(--transition); background: none; border: none; color: var(--color-primary); font-size: var(--text-xs); padding: 0 var(--space-1); }
-  .embed-hint-dismiss:hover { opacity: 1; }
   .app-body { display: flex; flex: 1; overflow: hidden; }
   aside { width: var(--sidebar-w); flex-shrink: 0; background: var(--color-surface); border-right: 1px solid var(--color-border); display: flex; flex-direction: column; overflow-y: auto; overflow-x: hidden; z-index: 100; }
   .sidebar-header { padding: var(--space-4); border-bottom: 1px solid var(--color-border); position: sticky; top: 0; background: var(--color-surface); z-index: 10; }
@@ -146,7 +143,6 @@
     aside.open { transform: translateX(0); }
     .sidebar-toggle { display: flex; }
     #map { width: 100%; }
-    .embed-hint { display: none; }
   }
   [data-theme="light"] {
     --color-bg: #f7f6f2; --color-surface: #f9f8f5; --color-surface-2: #f3f0ec; --color-surface-3: #edeae5;
@@ -156,7 +152,7 @@
   }
 </style>
 </head>
-<body data-theme="dark">
+<body data-theme="light">
 
 <header>
   <div class="logo">
@@ -174,12 +170,6 @@
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
   </button>
 </header>
-
-<div class="embed-hint" id="embedHint">
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
-  <span>Para incorporar no <strong>Looker Studio</strong>: adicione via componente <em>URL Embed</em> → cole a URL pública.</span>
-  <button class="embed-hint-dismiss" onclick="document.getElementById('embedHint').style.display='none'">✕ Fechar</button>
-</div>
 
 <div class="app-body">
   <button class="sidebar-toggle" id="sidebarToggle" aria-label="Abrir painel">
@@ -293,11 +283,11 @@ const COBERTURAS_DR = [
 const map = L.map('map',{zoomControl:true}).setView([-22.85,-43.3],9);
 const tileDark  = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',  {attribution:'© OpenStreetMap © CARTO',subdomains:'abcd',maxZoom:19});
 const tileLight = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {attribution:'© OpenStreetMap © CARTO',subdomains:'abcd',maxZoom:19});
-tileDark.addTo(map);
-let isDark = true;
+tileLight.addTo(map);
+let isDark = false;
 
 const layerMap    = {};
-const opacityMap  = {};   // id → valor padrão de opacidade (0‒1)
+const opacityMap  = {};
 const groupLayers = { sites:[], rj:[], dr:[] };
 
 function showInfo(html){ document.getElementById('infoContent').innerHTML = html; }
@@ -356,8 +346,8 @@ function setLayerOpacity(id, value){
   opacityMap[id] = pct / 100;
   const layer = layerMap[id];
   if (!layer) return;
-  if (layer.setOpacity)  layer.setOpacity(pct/100);       // imageOverlay
-  if (layer.setStyle)    layer.setStyle({fillOpacity: pct/100, opacity: Math.min(1, pct/100 + 0.2)}); // rectangle
+  if (layer.setOpacity)  layer.setOpacity(pct/100);
+  if (layer.setStyle)    layer.setStyle({fillOpacity: pct/100, opacity: Math.min(1, pct/100 + 0.2)});
   const lbl = document.getElementById(`opacity-lbl-${id}`);
   if (lbl) lbl.textContent = pct + '%';
 }
@@ -368,7 +358,6 @@ function buildSidebarGroup(containerId, dataArr, groupKey, color, defaultChecked
   dataArr.forEach(d=>{
     const wrapper = document.createElement('div');
 
-    // linha principal
     const item = document.createElement('div');
     item.className = 'layer-item';
     item.innerHTML = `
@@ -379,7 +368,6 @@ function buildSidebarGroup(containerId, dataArr, groupKey, color, defaultChecked
 
     wrapper.appendChild(item);
 
-    // linha de opacidade (somente para overlays)
     if (hasOpacity){
       const defPct = Math.round((opacityMap[d.id] ?? 0.70) * 100);
       const opRow  = document.createElement('div');
@@ -395,7 +383,6 @@ function buildSidebarGroup(containerId, dataArr, groupKey, color, defaultChecked
         <span class="opacity-label" id="opacity-lbl-${d.id}">${defPct}%</span>`;
       wrapper.appendChild(opRow);
 
-      // ativa/desativa slider junto com o checkbox
       item.querySelector('input[type=checkbox]').addEventListener('change', function(){
         opRow.classList.toggle('active', this.checked);
       });
@@ -462,7 +449,7 @@ function toggleAll(visible){
       ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>'
       : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>';
   }
-  setTheme(true);
+  setTheme(false);
   btn.addEventListener('click',()=>setTheme(!isDark));
 })();
 
