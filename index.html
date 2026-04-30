@@ -199,7 +199,6 @@
 const SHEET_ID   = '1S8ag1NjIYaE4DvBC8I3J4bRICtF28WrMqIwyRFqPun0';
 const SHEET_NAME = 'Geral';
 
-// sheetKey = sigla exata da 1ª coluna da planilha (nome_retransmissora)
 const SITES = [
   { id:'s0',  name:'Sumaré',          sheetKey:'sum', lat:-22.95012, lng:-43.23324, potencia:'18kW'  },
   { id:'s1',  name:'Morin',           sheetKey:'mor', lat:-22.53719, lng:-43.14558, potencia:'3kW'   },
@@ -246,6 +245,19 @@ const opacityMap  = {};
 const groupLayers = { sites:[], rj:[], dr:[] };
 function showInfo(html){ document.getElementById('infoContent').innerHTML = html; }
 
+// Converte qualquer URL do Google Drive para o endpoint de thumbnail embed
+function driveImgUrl(url) {
+  if (!url) return '';
+  // formato: drive.google.com/uc?id=ID  ou  /file/d/ID/
+  let id = null;
+  const m1 = url.match(/[?&]id=([^&]+)/);
+  if (m1) id = m1[1];
+  const m2 = url.match(/\/file\/d\/([^/?]+)/);
+  if (!id && m2) id = m2[1];
+  if (id) return `https://drive.google.com/thumbnail?id=${id}&sz=w600`;
+  return url; // URL já é direta, usa como está
+}
+
 function siteIcon(color){
   return L.divIcon({
     className:'',
@@ -285,11 +297,13 @@ function fmtNum(v) {
   const n = parseFloat(String(v).replace(/[^0-9.]/g,''));
   return isNaN(n) ? (v || '—') : n.toLocaleString('pt-BR');
 }
+
 function buildSitePopup(s, row) {
   const tipo      = row?.Tipo          || '—';
   const popBest   = row?.Pop_BestServ   ? fmtNum(row.Pop_BestServ)   : '—';
   const popSingle = row?.Pop_SingleServ ? fmtNum(row.Pop_SingleServ) : '—';
-  const foto      = row?.Foto || '';
+  const fotoRaw   = row?.Foto || '';
+  const foto      = driveImgUrl(fotoRaw);
   const fotoHTML  = foto
     ? `<img src="${foto}" alt="${s.name}" onerror="this.parentElement.innerHTML='<span class=sp-photo-placeholder>Foto indisponível</span>'">`
     : `<span class="sp-photo-placeholder">Sem foto cadastrada</span>`;
