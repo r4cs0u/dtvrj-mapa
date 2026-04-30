@@ -72,8 +72,6 @@
   .info-content strong { color: var(--color-text); }
   .info-coords { font-family: 'SF Mono','Consolas',monospace; font-size: 10px; color: var(--color-text-faint); margin-top: var(--space-1); }
   #map { flex: 1; height: 100%; }
-
-  /* ── POPUP LEAFLET ── */
   .leaflet-popup-content-wrapper { background: var(--color-surface-2) !important; color: var(--color-text) !important; border: 1px solid var(--color-border) !important; border-radius: var(--radius-md) !important; box-shadow: var(--shadow-lg) !important; padding: 0 !important; }
   .leaflet-popup-content { margin: 0 !important; padding: 0 !important; font-family: var(--font-body) !important; font-size: 13px !important; line-height: 1.5 !important; min-width: 220px; }
   .leaflet-popup-tip { background: var(--color-surface-2) !important; }
@@ -83,8 +81,6 @@
   .popup-type.dr { background: rgba(249,115,22,0.2); color: #fb923c; }
   .popup-detail { font-size: 11px; color: var(--color-text-muted); padding: 2px var(--space-3); }
   .popup-detail strong { color: var(--color-text); }
-
-  /* ── SITE POPUP (novo layout) ── */
   .site-popup { width: 230px; }
   .sp-header { display: flex; justify-content: space-between; align-items: flex-start; padding: 10px 12px 8px; gap: 8px; }
   .sp-name { font-weight: 700; font-size: 14px; color: var(--color-text); line-height: 1.2; }
@@ -96,9 +92,6 @@
   .sp-footer { padding: 8px 12px 10px; }
   .sp-pop { font-size: 11px; color: var(--color-text-muted); line-height: 1.7; }
   .sp-pop strong { color: var(--color-text); }
-  .sp-loading { padding: 12px; font-size: 11px; color: var(--color-text-faint); text-align: center; font-style: italic; }
-
-  /* ── LEGENDA ── */
   .legend { position: absolute; bottom: var(--space-4); right: var(--space-4); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--space-3) var(--space-4); z-index: 500; box-shadow: var(--shadow-md); min-width: 160px; }
   .legend-title { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-text-muted); margin-bottom: var(--space-2); }
   .legend-item { display: flex; align-items: center; gap: var(--space-2); font-size: 11px; color: var(--color-text-muted); margin-bottom: 4px; }
@@ -142,7 +135,6 @@
   <button class="sidebar-toggle" id="sidebarToggle" aria-label="Abrir painel">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
   </button>
-
   <aside id="sidebar">
     <div class="sidebar-header">
       <div class="sidebar-title">Camadas</div>
@@ -194,7 +186,6 @@
       </div>
     </div>
   </aside>
-
   <div id="map"></div>
 </div>
 
@@ -207,25 +198,25 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-// ── CONFIG PLANILHA ──────────────────────────────────────────────────────────
 const SHEET_ID   = '1S8ag1NjIYaE4DvBC8I3J4bRICtF28WrMqIwyRFqPun0';
 const SHEET_NAME = 'Geral';
 
-// ── DADOS DOS SITES ───────────────────────────────────────────────────────
+// sheetKey = nome exato (lowercase) como aparece na 1ª coluna da planilha
+// Se omitido, usa o próprio 'name' em lowercase
 const SITES = [
-  { id:'s0',  name:'Sumaré',          lat:-22.95012, lng:-43.23324, potencia:'18kW' },
-  { id:'s1',  name:'Morin',           lat:-22.53719, lng:-43.14558, potencia:'3kW' },
-  { id:'s2',  name:'Mendanha',        lat:-22.82244, lng:-43.51939, potencia:'1200W' },
-  { id:'s3',  name:'São Gonçalo',     lat:-22.82346, lng:-43.00665, potencia:'600W' },
-  { id:'s4',  name:'Igreja da Pena',  lat:-22.93983, lng:-43.34427, potencia:'400W' },
-  { id:'s5',  name:'Nova Iguaçu',     lat:-22.72267, lng:-43.46298, potencia:'280W' },
-  { id:'s6',  name:'Rio Sul',         lat:-22.95517, lng:-43.17160, potencia:'200W' },
-  { id:'s7',  name:'Bento Ribeiro',   lat:-22.87166, lng:-43.35837, potencia:'100W' },
-  { id:'s8',  name:'Barra Sul',       lat:-23.00470, lng:-43.42473, potencia:'100W' },
-  { id:'s9',  name:'Itaguaí',         lat:-22.85961, lng:-43.76917, potencia:'80W' },
-  { id:'s10', name:'Jardim Oceânico', lat:-23.00544, lng:-43.31778, potencia:'100W' },
-  { id:'s11', name:'Mangaratiba',     lat:-22.97478, lng:-44.03720, potencia:'300W' },
-  { id:'s12', name:'SBT',             lat:-22.94906, lng:-43.22763, potencia:'100W' },
+  { id:'s0',  name:'Sumaré',          sheetKey:'sumaré',           lat:-22.95012, lng:-43.23324, potencia:'18kW'   },
+  { id:'s1',  name:'Morin',           sheetKey:'morim',            lat:-22.53719, lng:-43.14558, potencia:'3kW'    },
+  { id:'s2',  name:'Mendanha',        sheetKey:'mendanha',         lat:-22.82244, lng:-43.51939, potencia:'1200W'  },
+  { id:'s3',  name:'São Gonçalo',     sheetKey:'são gonçalo',      lat:-22.82346, lng:-43.00665, potencia:'600W'   },
+  { id:'s4',  name:'Igreja da Pena',  sheetKey:'igreja da penna',  lat:-22.93983, lng:-43.34427, potencia:'400W'   },
+  { id:'s5',  name:'Nova Iguaçu',     sheetKey:'nova iguaçu',      lat:-22.72267, lng:-43.46298, potencia:'280W'   },
+  { id:'s6',  name:'Rio Sul',         sheetKey:'rio sul',          lat:-22.95517, lng:-43.17160, potencia:'200W'   },
+  { id:'s7',  name:'Bento Ribeiro',   sheetKey:'bento ribeiro',    lat:-22.87166, lng:-43.35837, potencia:'100W'   },
+  { id:'s8',  name:'Barra Sul',       sheetKey:'barra sul',        lat:-23.00470, lng:-43.42473, potencia:'100W'   },
+  { id:'s9',  name:'Itaguaí',         sheetKey:'itaguaí',          lat:-22.85961, lng:-43.76917, potencia:'80W'    },
+  { id:'s10', name:'Jardim Oceânico', sheetKey:'lake',             lat:-23.00544, lng:-43.31778, potencia:'100W'   },
+  { id:'s11', name:'Mangaratiba',     sheetKey:'mangaratiba',      lat:-22.97478, lng:-44.03720, potencia:'300W'   },
+  { id:'s12', name:'SBT',             sheetKey:'sbt/sumaré',       lat:-22.94906, lng:-43.22763, potencia:'100W'   },
 ];
 const COBERTURAS_RJ = [
   { id:'ID_0',  name:'Best Server Sumaré 18kW', isBestServer:true, bounds:[[-23.91338,-44.79006],[-21.81064,-41.97870]], file:'BestServerRJ.png' },
@@ -248,17 +239,14 @@ const COBERTURAS_DR = [
   { id:'ID_4', name:'Morin 750W (50% 10m)',         bounds:[[-23.63311,-44.32433],[-21.43946,-41.96228]], file:'Morin750W.png' },
 ];
 
-// ── MAPA ──────────────────────────────────────────────────────────────────────
 const map = L.map('map',{zoomControl:true}).setView([-22.85,-43.3],9);
 const tileDark  = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',  {attribution:'© OpenStreetMap © CARTO',subdomains:'abcd',maxZoom:19});
 const tileLight = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {attribution:'© OpenStreetMap © CARTO',subdomains:'abcd',maxZoom:19});
 tileLight.addTo(map);
 let isDark = false;
-
 const layerMap    = {};
 const opacityMap  = {};
 const groupLayers = { sites:[], rj:[], dr:[] };
-
 function showInfo(html){ document.getElementById('infoContent').innerHTML = html; }
 
 function siteIcon(color){
@@ -272,13 +260,11 @@ function siteIcon(color){
   });
 }
 
-// ── BUSCA DADOS DO GOOGLE SHEETS ────────────────────────────────────────────
 async function fetchSheetData() {
   try {
     const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_NAME)}`;
     const res  = await fetch(url);
     const text = await res.text();
-    // Remove o wrapper JSONP do Google
     const json = JSON.parse(text.slice(text.indexOf('(') + 1, text.lastIndexOf(')')));
     const cols = json.table.cols.map(c => c.label);
     const rows = json.table.rows || [];
@@ -287,211 +273,140 @@ async function fetchSheetData() {
       if (!row || !row.c) return;
       const obj = {};
       cols.forEach((col, i) => { obj[col] = row.c[i] ? row.c[i].v : ''; });
-      // Usa a primeira coluna como chave de referência (nome do site)
       const key = String(obj[cols[0]] || '').trim().toLowerCase();
       if (key) data[key] = obj;
     });
-    console.log('[Sheet] Dados carregados:', Object.keys(data).length, 'linhas');
+    console.log('[Sheet] Carregado:', Object.keys(data).length, 'linhas |', Object.keys(data).join(', '));
     return data;
   } catch(e) {
-    console.warn('[Sheet] Falha ao carregar planilha:', e);
+    console.warn('[Sheet] Falha:', e);
     return {};
   }
 }
 
-// ── POPUP SITE (layout mockup) ──────────────────────────────────────────────
 function fmtNum(v) {
   const n = parseFloat(String(v).replace(/[^0-9.]/g,''));
   return isNaN(n) ? (v || '—') : n.toLocaleString('pt-BR');
 }
 function buildSitePopup(s, row) {
-  const tipo      = row?.Tipo       || '—';
+  const tipo      = row?.Tipo            || '—';
   const popBest   = row?.Pop_BestServ   ? fmtNum(row.Pop_BestServ)   : '—';
   const popSingle = row?.Pop_SingleServ ? fmtNum(row.Pop_SingleServ) : '—';
   const foto      = row?.Foto || '';
   const fotoHTML  = foto
     ? `<img src="${foto}" alt="${s.name}" onerror="this.parentElement.innerHTML='<span class=sp-photo-placeholder>Foto indisponível</span>'">`
     : `<span class="sp-photo-placeholder">Sem foto cadastrada</span>`;
-  return `
-    <div class="site-popup">
-      <div class="sp-header">
-        <div>
-          <div class="sp-name">${s.name}</div>
-          <div class="sp-power">${s.potencia}</div>
-        </div>
-        <span class="sp-tipo">Tipo: ${tipo}</span>
-      </div>
-      <div class="sp-photo">${fotoHTML}</div>
-      <div class="sp-footer">
-        <div class="sp-pop"><strong>Pop Best Server:</strong> ${popBest}</div>
-        <div class="sp-pop"><strong>Pop Single Server:</strong> ${popSingle}</div>
-      </div>
-    </div>`;
+  return `<div class="site-popup">
+    <div class="sp-header">
+      <div><div class="sp-name">${s.name}</div><div class="sp-power">${s.potencia}</div></div>
+      <span class="sp-tipo">Tipo: ${tipo}</span>
+    </div>
+    <div class="sp-photo">${fotoHTML}</div>
+    <div class="sp-footer">
+      <div class="sp-pop"><strong>Pop Best Server:</strong> ${popBest}</div>
+      <div class="sp-pop"><strong>Pop Single Server:</strong> ${popSingle}</div>
+    </div>
+  </div>`;
 }
 
-// ── OVERLAYS DE COBERTURA ─────────────────────────────────────────────────────
 const BASE_URL = 'https://r4cs0u.github.io/dtvrj-mapa/imagens/';
 function makeOverlay(data, group){
-  const isBest    = !!data.isBestServer;
-  const fillColor = group==='rj' ? '#3b82f6' : '#f97316';
+  const isBest     = !!data.isBestServer;
+  const fillColor  = group==='rj' ? '#3b82f6' : '#f97316';
   const defOpacity = isBest ? 0.80 : 0.70;
   opacityMap[data.id] = defOpacity;
-  const imgOverlay = L.imageOverlay(BASE_URL+data.file, data.bounds, {opacity:defOpacity, interactive:true});
-  imgOverlay.on('error', function(){
-    const rect = L.rectangle(data.bounds,{
-      color:fillColor, weight:isBest?2.5:1.5, opacity:isBest?0.85:0.55,
-      fillColor:fillColor, fillOpacity:isBest?0.18:0.10, dashArray:isBest?null:'4 4'
-    });
-    imgOverlay.off(); imgOverlay.remove();
-    layerMap[data.id] = rect;
+  const img = L.imageOverlay(BASE_URL+data.file, data.bounds, {opacity:defOpacity, interactive:true});
+  img.on('error', function(){
+    const rect = L.rectangle(data.bounds,{color:fillColor,weight:isBest?2.5:1.5,opacity:isBest?0.85:0.55,fillColor:fillColor,fillOpacity:isBest?0.18:0.10,dashArray:isBest?null:'4 4'});
+    img.off(); img.remove(); layerMap[data.id]=rect;
   });
-  const tl = group==='rj'?'Cobertura RJ':'Cobertura DR';
-  const tc = group==='rj'?'rj':'dr';
-  imgOverlay.bindPopup(`<div style="padding:10px 12px"><div style="font-weight:700;font-size:14px;color:var(--color-text);margin-bottom:6px">${data.name}</div><span class="popup-type ${tc}">${tl}</span>${isBest?'<div style="margin-top:6px;font-size:11px;color:var(--color-primary)">▲ Best Serving Network</div>':''}</div>`);
-  imgOverlay.on('click',()=>showInfo(`<strong>${data.name}</strong><br><span style="font-size:10px;color:var(--color-text-muted)">${tl}</span>`));
-  layerMap[data.id] = imgOverlay;
-  groupLayers[group].push(data.id);
+  const tl=group==='rj'?'Cobertura RJ':'Cobertura DR', tc=group==='rj'?'rj':'dr';
+  img.bindPopup(`<div style="padding:10px 12px"><div style="font-weight:700;font-size:14px;color:var(--color-text);margin-bottom:6px">${data.name}</div><span class="popup-type ${tc}">${tl}</span>${isBest?'<div style="margin-top:6px;font-size:11px;color:var(--color-primary)">▲ Best Serving Network</div>':''}</div>`);
+  img.on('click',()=>showInfo(`<strong>${data.name}</strong><br><span style="font-size:10px;color:var(--color-text-muted)">${tl}</span>`));
+  layerMap[data.id]=img; groupLayers[group].push(data.id);
 }
 COBERTURAS_RJ.forEach(d=>makeOverlay(d,'rj'));
 COBERTURAS_DR.forEach(d=>makeOverlay(d,'dr'));
 
-// ── CONTROLE DE OPACIDADE ─────────────────────────────────────────────────────
-function setLayerOpacity(id, value){
-  const pct = parseInt(value);
-  opacityMap[id] = pct / 100;
-  const layer = layerMap[id];
-  if (!layer) return;
-  if (layer.setOpacity) layer.setOpacity(pct/100);
-  if (layer.setStyle)   layer.setStyle({fillOpacity: pct/100, opacity: Math.min(1, pct/100 + 0.2)});
-  const lbl = document.getElementById(`opacity-lbl-${id}`);
-  if (lbl) lbl.textContent = pct + '%';
+function setLayerOpacity(id,value){
+  const pct=parseInt(value); opacityMap[id]=pct/100;
+  const layer=layerMap[id]; if(!layer)return;
+  if(layer.setOpacity)layer.setOpacity(pct/100);
+  if(layer.setStyle)layer.setStyle({fillOpacity:pct/100,opacity:Math.min(1,pct/100+0.2)});
+  const lbl=document.getElementById(`opacity-lbl-${id}`); if(lbl)lbl.textContent=pct+'%';
 }
 
-// ── SIDEBAR ───────────────────────────────────────────────────────────────────
-function buildSidebarGroup(containerId, dataArr, groupKey, color, defaultChecked=true, hasOpacity=false){
-  const container = document.getElementById(containerId);
+function buildSidebarGroup(containerId,dataArr,groupKey,color,defaultChecked=true,hasOpacity=false){
+  const container=document.getElementById(containerId);
   dataArr.forEach(d=>{
-    const wrapper = document.createElement('div');
-    const item = document.createElement('div');
-    item.className = 'layer-item';
-    item.innerHTML = `
-      <input type="checkbox" id="layer-${d.id}" ${defaultChecked?'checked':''}
-        onchange="toggleLayer('${d.id}', this.checked, '${groupKey}')">
+    const wrapper=document.createElement('div');
+    const item=document.createElement('div'); item.className='layer-item';
+    item.innerHTML=`<input type="checkbox" id="layer-${d.id}" ${defaultChecked?'checked':''} onchange="toggleLayer('${d.id}',this.checked,'${groupKey}')">
       <div class="layer-color-swatch" style="background:${color};${d.isBestServer?'box-shadow:0 0 4px '+color:''}"></div>
       <label class="layer-name" for="layer-${d.id}" title="${d.name}">${d.name}</label>`;
     wrapper.appendChild(item);
-    if (hasOpacity){
-      const defPct = Math.round((opacityMap[d.id] ?? 0.70) * 100);
-      const opRow  = document.createElement('div');
-      opRow.className = 'layer-opacity-row' + (defaultChecked ? ' active' : '');
-      opRow.id = `opacity-row-${d.id}`;
-      opRow.innerHTML = `
-        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0;color:var(--color-text-faint)"><circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18" opacity=".4"/></svg>
-        <input type="range" class="opacity-slider" id="opacity-${d.id}" min="0" max="100" value="${defPct}" step="5" oninput="setLayerOpacity('${d.id}', this.value)">
+    if(hasOpacity){
+      const defPct=Math.round((opacityMap[d.id]??0.70)*100);
+      const opRow=document.createElement('div');
+      opRow.className='layer-opacity-row'+(defaultChecked?' active':''); opRow.id=`opacity-row-${d.id}`;
+      opRow.innerHTML=`<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0;color:var(--color-text-faint)"><circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18" opacity=".4"/></svg>
+        <input type="range" class="opacity-slider" id="opacity-${d.id}" min="0" max="100" value="${defPct}" step="5" oninput="setLayerOpacity('${d.id}',this.value)">
         <span class="opacity-label" id="opacity-lbl-${d.id}">${defPct}%</span>`;
       wrapper.appendChild(opRow);
-      item.querySelector('input[type=checkbox]').addEventListener('change', function(){
-        opRow.classList.toggle('active', this.checked);
-      });
+      item.querySelector('input[type=checkbox]').addEventListener('change',function(){opRow.classList.toggle('active',this.checked);});
     }
     container.appendChild(wrapper);
   });
 }
-buildSidebarGroup('items-rj', COBERTURAS_RJ, 'rj', '#3b82f6', false, true);
-buildSidebarGroup('items-dr', COBERTURAS_DR, 'dr', '#f97316', false, true);
+buildSidebarGroup('items-rj',COBERTURAS_RJ,'rj','#3b82f6',false,true);
+buildSidebarGroup('items-dr',COBERTURAS_DR,'dr','#f97316',false,true);
 
-// ── TOGGLES ──────────────────────────────────────────────────────────────────
-function toggleLayer(id, visible, group){
-  const layer = layerMap[id];
-  if (!layer) return;
-  if (visible){ layer.addTo(map); } else { map.removeLayer(layer); }
-  updateGroupToggle(group);
-}
-function toggleGroup(group, visible){
-  groupLayers[group].forEach(id=>{
-    const layer = layerMap[id];
-    const cb  = document.getElementById(`layer-${id}`);
-    const row = document.getElementById(`opacity-row-${id}`);
-    if (!layer) return;
-    if (visible){ layer.addTo(map); } else { map.removeLayer(layer); }
-    if (cb)  cb.checked = visible;
-    if (row) row.classList.toggle('active', visible);
-  });
-}
-function toggleGroupAll(group){
-  const masterCb = document.getElementById(`toggle-group-${group}`);
-  const newState = !masterCb.checked;
-  masterCb.checked = newState;
-  toggleGroup(group, newState);
-}
-function updateGroupToggle(group){
-  const allChecked = groupLayers[group].every(id=>{
-    const cb = document.getElementById(`layer-${id}`);
-    return cb && cb.checked;
-  });
-  const masterCb = document.getElementById(`toggle-group-${group}`);
-  if (masterCb) masterCb.checked = allChecked;
-}
-function toggleAll(visible){
-  ['sites','rj','dr'].forEach(g=>{
-    const m = document.getElementById(`toggle-group-${g}`);
-    if (m) m.checked = visible;
-    toggleGroup(g, visible);
-  });
-}
+function toggleLayer(id,visible,group){const layer=layerMap[id];if(!layer)return;if(visible){layer.addTo(map);}else{map.removeLayer(layer);}updateGroupToggle(group);}
+function toggleGroup(group,visible){groupLayers[group].forEach(id=>{const layer=layerMap[id];const cb=document.getElementById(`layer-${id}`);const row=document.getElementById(`opacity-row-${id}`);if(!layer)return;if(visible){layer.addTo(map);}else{map.removeLayer(layer);}if(cb)cb.checked=visible;if(row)row.classList.toggle('active',visible);});}
+function toggleGroupAll(group){const m=document.getElementById(`toggle-group-${group}`);const s=!m.checked;m.checked=s;toggleGroup(group,s);}
+function updateGroupToggle(group){const all=groupLayers[group].every(id=>{const cb=document.getElementById(`layer-${id}`);return cb&&cb.checked;});const m=document.getElementById(`toggle-group-${group}`);if(m)m.checked=all;}
+function toggleAll(visible){['sites','rj','dr'].forEach(g=>{const m=document.getElementById(`toggle-group-${g}`);if(m)m.checked=visible;toggleGroup(g,visible);});}
 
-// ── TEMA ─────────────────────────────────────────────────────────────────────
 (function(){
-  const btn  = document.querySelector('[data-theme-toggle]');
-  const root = document.documentElement;
+  const btn=document.querySelector('[data-theme-toggle]'),root=document.documentElement;
   function setTheme(dark){
-    isDark = dark;
-    root.setAttribute('data-theme', dark?'dark':'light');
-    if (dark){ map.removeLayer(tileLight); tileDark.addTo(map); }
-    else     { map.removeLayer(tileDark);  tileLight.addTo(map); }
-    btn.innerHTML = dark
-      ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>'
-      : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>';
+    isDark=dark; root.setAttribute('data-theme',dark?'dark':'light');
+    if(dark){map.removeLayer(tileLight);tileDark.addTo(map);}else{map.removeLayer(tileDark);tileLight.addTo(map);}
+    btn.innerHTML=dark
+      ?'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>'
+      :'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>';
   }
   setTheme(false);
   btn.addEventListener('click',()=>setTheme(!isDark));
 })();
 
-// ── SIDEBAR MOBILE ──────────────────────────────────────────────────────────
-const sidebar   = document.getElementById('sidebar');
-const toggleBtn = document.getElementById('sidebarToggle');
-let sidebarOpen = false;
+const sidebar=document.getElementById('sidebar'),toggleBtn=document.getElementById('sidebarToggle');
+let sidebarOpen=false;
 toggleBtn.addEventListener('click',()=>{
-  sidebarOpen = !sidebarOpen;
-  sidebar.classList.toggle('open', sidebarOpen);
-  toggleBtn.style.left = sidebarOpen ? getComputedStyle(document.documentElement).getPropertyValue('--sidebar-w').trim() : '0';
-  toggleBtn.innerHTML = sidebarOpen
-    ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>'
-    : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>';
+  sidebarOpen=!sidebarOpen;
+  sidebar.classList.toggle('open',sidebarOpen);
+  toggleBtn.style.left=sidebarOpen?getComputedStyle(document.documentElement).getPropertyValue('--sidebar-w').trim():'0';
+  toggleBtn.innerHTML=sidebarOpen
+    ?'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>'
+    :'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>';
 });
-document.getElementById('map').style.position = 'relative';
-const legend = document.getElementById('mapLegend');
+document.getElementById('map').style.position='relative';
+const legend=document.getElementById('mapLegend');
 document.querySelector('.app-body').appendChild(legend);
 Object.assign(legend.style,{position:'absolute',bottom:'16px',right:'16px',zIndex:'500'});
 
-// ── INIT: busca planilha e cria marcadores ──────────────────────────────────────
 (async function init(){
   const sheetData = await fetchSheetData();
-
   SITES.forEach(s => {
-    const key = s.name.trim().toLowerCase();
+    // sheetKey define qual chave buscar na planilha (lowercase)
+    const key = (s.sheetKey || s.name).trim().toLowerCase();
     const row = sheetData[key] || null;
-    const m   = L.marker([s.lat, s.lng], {icon: siteIcon('#ef4444')});
+    if (!row) console.warn(`[Sheet] Sem dados para: "${s.name}" (chave: "${key}")`);
+    const m = L.marker([s.lat, s.lng], {icon: siteIcon('#ef4444')});
     m.bindPopup(buildSitePopup(s, row), {maxWidth: 260});
-    m.on('click', () => showInfo(
-      `<strong>${s.name}</strong>
-       <div class="info-coords">Lat: ${s.lat.toFixed(5)}<br>Lng: ${s.lng.toFixed(5)}</div>`
-    ));
-    m.addTo(map);
-    layerMap[s.id]  = m;
-    groupLayers.sites.push(s.id);
+    m.on('click', () => showInfo(`<strong>${s.name}</strong><div class="info-coords">Lat: ${s.lat.toFixed(5)}<br>Lng: ${s.lng.toFixed(5)}</div>`));
+    m.addTo(map); layerMap[s.id]=m; groupLayers.sites.push(s.id);
   });
-
   buildSidebarGroup('items-sites', SITES, 'sites', '#ef4444', true, false);
 })();
 </script>
