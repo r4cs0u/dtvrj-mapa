@@ -75,16 +75,19 @@
   .leaflet-popup-content-wrapper { background: var(--color-surface-2) !important; color: var(--color-text) !important; border: 1px solid var(--color-border) !important; border-radius: var(--radius-md) !important; box-shadow: var(--shadow-lg) !important; padding: 0 !important; }
   .leaflet-popup-content { margin: 0 !important; padding: 0 !important; font-family: var(--font-body) !important; font-size: 13px !important; line-height: 1.5 !important; min-width: 220px; }
   .leaflet-popup-tip { background: var(--color-surface-2) !important; }
-  .leaflet-popup-close-button { color: var(--color-text-muted) !important; top: 6px !important; right: 8px !important; z-index: 10; }
+  /* X de fechar: empurra para baixo do header do popup */
+  .leaflet-popup-close-button { color: var(--color-text-muted) !important; top: auto !important; bottom: -28px !important; right: 50% !important; transform: translateX(50%) !important; background: var(--color-surface-3) !important; border: 1px solid var(--color-border) !important; border-radius: 50% !important; width: 22px !important; height: 22px !important; display: flex !important; align-items: center !important; justify-content: center !important; font-size: 14px !important; z-index: 10; }
   .popup-type { font-size: 11px; padding: 2px 6px; border-radius: var(--radius-sm); display: inline-block; font-weight: 500; }
   .popup-type.rj { background: rgba(59,130,246,0.2); color: #60a5fa; }
   .popup-type.dr { background: rgba(249,115,22,0.2); color: #fb923c; }
-  .site-popup { width: 230px; }
-  .sp-header { display: flex; justify-content: space-between; align-items: flex-start; padding: 10px 12px 8px; gap: 8px; }
+  /* popup do site */
+  .site-popup { width: 220px; }
+  .sp-header { padding: 10px 12px 8px; }
   .sp-name { font-weight: 700; font-size: 14px; color: var(--color-text); line-height: 1.2; }
   .sp-power { font-size: 12px; color: var(--color-text-muted); margin-top: 1px; }
-  .sp-tipo { font-size: 11px; font-weight: 600; color: var(--color-primary); background: var(--color-primary-light); padding: 3px 7px; border-radius: var(--radius-sm); white-space: nowrap; flex-shrink: 0; align-self: flex-start; margin-top: 2px; }
-  .sp-photo { width: 100%; height: 140px; background: var(--color-surface-3); overflow: hidden; display: flex; align-items: center; justify-content: center; border-top: 1px solid var(--color-border); border-bottom: 1px solid var(--color-border); }
+  .sp-tipo { display: inline-block; font-size: 11px; font-weight: 600; color: var(--color-primary); background: var(--color-primary-light); padding: 3px 7px; border-radius: var(--radius-sm); margin-top: 6px; }
+  /* foto em proporção 9:16 (largura 220px → altura ~391px, mas limitamos a 340px) */
+  .sp-photo { width: 100%; aspect-ratio: 9/16; max-height: 340px; background: var(--color-surface-3); overflow: hidden; display: flex; align-items: center; justify-content: center; border-top: 1px solid var(--color-border); border-bottom: 1px solid var(--color-border); }
   .sp-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .sp-photo-placeholder { color: var(--color-text-faint); font-size: 11px; font-style: italic; }
   .sp-footer { padding: 8px 12px 10px; }
@@ -245,17 +248,24 @@ const opacityMap  = {};
 const groupLayers = { sites:[], rj:[], dr:[] };
 function showInfo(html){ document.getElementById('infoContent').innerHTML = html; }
 
-// Converte qualquer URL do Google Drive para o endpoint de thumbnail embed
 function driveImgUrl(url) {
   if (!url) return '';
-  // formato: drive.google.com/uc?id=ID  ou  /file/d/ID/
   let id = null;
   const m1 = url.match(/[?&]id=([^&]+)/);
   if (m1) id = m1[1];
   const m2 = url.match(/\/file\/d\/([^/?]+)/);
   if (!id && m2) id = m2[1];
   if (id) return `https://drive.google.com/thumbnail?id=${id}&sz=w600`;
-  return url; // URL já é direta, usa como está
+  return url;
+}
+
+// Traduz sigla de tipo para nome completo
+function tipoLabel(tipo) {
+  const t = String(tipo || '').trim().toUpperCase();
+  if (t === 'RTX') return 'Site Retransmissor';
+  if (t === 'TX')  return 'Site Transmissor';
+  if (t === 'GF')  return 'Site Gap Filler';
+  return tipo || '—';
 }
 
 function siteIcon(color){
@@ -299,7 +309,8 @@ function fmtNum(v) {
 }
 
 function buildSitePopup(s, row) {
-  const tipo      = row?.Tipo          || '—';
+  const tipoRaw   = row?.Tipo || '—';
+  const tipo      = tipoLabel(tipoRaw);
   const popBest   = row?.Pop_BestServ   ? fmtNum(row.Pop_BestServ)   : '—';
   const popSingle = row?.Pop_SingleServ ? fmtNum(row.Pop_SingleServ) : '—';
   const fotoRaw   = row?.Foto || '';
@@ -309,8 +320,9 @@ function buildSitePopup(s, row) {
     : `<span class="sp-photo-placeholder">Sem foto cadastrada</span>`;
   return `<div class="site-popup">
     <div class="sp-header">
-      <div><div class="sp-name">${s.name}</div><div class="sp-power">${s.potencia}</div></div>
-      <span class="sp-tipo">Tipo: ${tipo}</span>
+      <div class="sp-name">${s.name}</div>
+      <div class="sp-power">${s.potencia}</div>
+      <span class="sp-tipo">${tipo}</span>
     </div>
     <div class="sp-photo">${fotoHTML}</div>
     <div class="sp-footer">
