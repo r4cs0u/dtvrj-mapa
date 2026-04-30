@@ -667,42 +667,70 @@ SITES.forEach(s => {
   groupLayers.sites.push(s.id);
 });
 
-// ── BUILD RJ OVERLAYS ────────────────────────────────────────────────────
-function makeRectangle(data, group) {
-  const isBest = !!data.isBestServer;
-  const fillColor = group === 'rj' ? '#3b82f6' : '#f97316';
-  const opacity = isBest ? 0.18 : 0.10;
-  const strokeOpacity = isBest ? 0.85 : 0.55;
-  const weight = isBest ? 2.5 : 1.5;
-  const dashArray = isBest ? null : '4 4';
+// ── CONFIGURAÇÃO — coloque seu username do GitHub aqui ─────────────────────
+// Exemplo: se seu perfil é github.com/joaosilva e o repo é dtvrj-mapa,
+// então BASE_URL = 'https://joaosilva.github.io/dtvrj-mapa/imagens/'
+const GITHUB_USERNAME = 'r4cs0u';   // ← ALTERE AQUI
+const GITHUB_REPO     = 'dtvrj-mapa';    // ← confirme o nome do repositório
+const BASE_URL = `https://${GITHUB_USERNAME}.github.io/${GITHUB_REPO}/imagens/`;
 
-  const rect = L.rectangle(data.bounds, {
-    color: fillColor,
-    weight: weight,
-    opacity: strokeOpacity,
-    fillColor: fillColor,
-    fillOpacity: opacity,
-    dashArray: dashArray
+// ── BUILD OVERLAYS (imageOverlay com fallback para retângulo) ──────────────
+function makeOverlay(data, group) {
+  const isBest   = !!data.isBestServer;
+  const fillColor = group === 'rj' ? '#3b82f6' : '#f97316';
+
+  // ── tenta carregar imageOverlay ──────────────────────────────────────────
+  const imgUrl = BASE_URL + data.file;
+  const imgOverlay = L.imageOverlay(imgUrl, data.bounds, {
+    opacity: isBest ? 0.80 : 0.70,
+    interactive: true,
+    crossOrigin: ''
   });
+
+  // fallback visual: se a imagem não carregar, exibe retângulo colorido
+  imgOverlay.on('error', function () {
+    const rect = L.rectangle(data.bounds, {
+      color: fillColor, weight: isBest ? 2.5 : 1.5,
+      opacity: isBest ? 0.85 : 0.55,
+      fillColor: fillColor,
+      fillOpacity: isBest ? 0.18 : 0.10,
+      dashArray: isBest ? null : '4 4'
+    });
+    rect.addTo(map);
+    imgOverlay.off(); // remove listeners do imageOverlay com erro
+    imgOverlay.remove();
+    layerMap[data.id] = rect;
+  });
+
   const typeLabel = group === 'rj' ? 'Cobertura RJ' : 'Cobertura DR';
-  const typeClass = group === 'rj' ? 'rj' : 'dr';
-  rect.bindPopup(`
+  const typeClass  = group === 'rj' ? 'rj' : 'dr';
+
+  imgOverlay.bindPopup(`
     <div class="popup-title">${data.name}</div>
     <span class="popup-type ${typeClass}">${typeLabel}</span>
     <div class="popup-detail"><strong>Arquivo:</strong> ${data.file}</div>
     <div class="popup-detail"><strong>ID:</strong> ${data.id}</div>
     ${isBest ? '<div class="popup-detail" style="margin-top:4px;color:var(--color-primary)">▲ Best Serving Network</div>' : ''}
   `);
-  rect.on('click', () => {
-    showInfo(`<strong>${data.name}</strong><br><span style="color:var(--color-text-muted);font-size:10px">${typeLabel} · ${data.id}</span><div class="info-coords">N:${data.bounds[1][0].toFixed(4)} S:${data.bounds[0][0].toFixed(4)}<br>E:${data.bounds[1][1].toFixed(4)} W:${data.bounds[0][1].toFixed(4)}</div>`);
+  imgOverlay.on('click', () => {
+    showInfo(`<strong>${data.name}</strong><br>
+      <span style="color:var(--color-text-muted);font-size:10px">${typeLabel} · ${data.id}</span>
+      <div class="info-coords">
+        N: ${data.bounds[1][0].toFixed(4)}<br>
+        S: ${data.bounds[0][0].toFixed(4)}<br>
+        E: ${data.bounds[1][1].toFixed(4)}<br>
+        W: ${data.bounds[0][1].toFixed(4)}
+      </div>`);
   });
-  rect.addTo(map);
-  layerMap[data.id] = rect;
+
+  imgOverlay.addTo(map);
+  layerMap[data.id] = imgOverlay;
   groupLayers[group].push(data.id);
 }
 
-COBERTURAS_RJ.forEach(d => makeRectangle(d, 'rj'));
-COBERTURAS_DR.forEach(d => makeRectangle(d, 'dr'));
+COBERTURAS_RJ.forEach(d => makeOverlay(d, 'rj'));
+COBERTURAS_DR.forEach(d => makeOverlay(d, 'dr'));
+
 
 // ── BUILD SIDEBAR ITEMS ───────────────────────────────────────────────────
 function buildSidebarGroup(containerId, dataArr, groupKey, color) {
@@ -809,4 +837,3 @@ Object.assign(legend.style, {
 });
 </script>
 </body>
-</html>
