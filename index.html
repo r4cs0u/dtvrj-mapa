@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Retransmissoras DTVRJ — Mapa de Cobertura</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300..700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+  :root {
+    --font-body: 'Inter', system-ui, sans-serif;
+    --text-xs: clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem);
+    --text-sm: clamp(0.875rem, 0.8rem + 0.35vw, 1rem);
+    --text-base: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
+    --text-lg: clamp(1.125rem, 1rem + 0.75vw, 1.5rem);
+    --space-1: 0.25rem; --space-2: 0.5rem; --space-3: 0.75rem;
+    --space-4: 1rem; --space-5: 1.25rem; --space-6: 1.5rem;
+    --radius-sm: 0.375rem; --radius-md: 0.5rem; --radius-lg: 0.75rem;
+    --transition: 180ms cubic-bezier(0.16, 1, 0.3, 1);
+    --sidebar-w: 280px;
+
+    /* Dark theme (default for maps) */
+    --color-bg: #0f0f10;
+    --color-surface: #161618;
+    --color-surface-2: #1c1c1f;
+    --color-surface-3: #232327;
+    --color-border: rgba(255,255,255,0.08);
+    --color-text: #e8e8ea;
+    --color-text-muted: #8a8a90;
+    --color-text-faint: #4a4a52;
+    --color-primary: #4f98a3;
+    --color-primary-light: rgba(79,152,163,0.15);
+    --color-primary-glow: rgba(79,152,163,0.3);
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.4);
+    --shadow-md: 0 4px 16px rgba(0,0,0,0.5);
+    --shadow-lg: 0 12px 40px rgba(0,0,0,0.6);
+
+    /* Layer colors */
+    --c-sites: #ef4444;
+    --c-rj: #3b82f6;
+    --c-rj-fill: rgba(59,130,246,0.12);
+    --c-rj-stroke: rgba(59,130,246,0.6);
+    --c-dr: #f97316;
+    --c-dr-fill: rgba(249,115,22,0.12);
+    --c-dr-stroke: rgba(249,115,22,0.6);
+    --c-bestserver: rgba(139,92,246,0.15);
+    --c-bestserver-stroke: rgba(139,92,246,0.7);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; }
+  body {
+    font-family: var(--font-body);
+    font-size: var(--text-sm);
+    color: var(--color-text);
+    background: var(--color-bg);
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── HEADER ── */
+  header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    background: var(--color-surface);
+    border-bottom: 1px solid var(--color-border);
+    box-shadow: var(--shadow-sm);
+    z-index: 1000;
+    flex-shrink: 0;
+    height: 52px;
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    flex-shrink: 0;
+  }
+  .logo-icon {
+    width: 28px; height: 28px;
+    color: var(--color-primary);
+  }
+  .logo-text {
+    font-size: var(--text-sm);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--color-text);
+    white-space: nowrap;
+  }
+  .header-divider {
+    width: 1px; height: 20px;
+    background: var(--color-border);
+    flex-shrink: 0;
+  }
+  .header-sub {
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+    flex: 1;
+  }
+  .theme-btn {
+    width: 32px; height: 32px;
+    border-radius: var(--radius-md);
+    background: var(--color-surface-2);
+    border: 1px solid var(--color-border);
+    color: var(--color-text-muted);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: color var(--transition), background var(--transition);
+    flex-shrink: 0;
+  }
+  .theme-btn:hover { color: var(--color-text); background: var(--color-surface-3); }
+
+  /* ── LOOKER STUDIO HINT ── */
+  .embed-hint {
+    background: color-mix(in oklch, var(--color-primary) 10%, var(--color-surface));
+    border-bottom: 1px solid var(--color-primary-glow);
+    padding: var(--space-2) var(--space-4);
+    font-size: var(--text-xs);
+    color: var(--color-primary);
+    display: flex; align-items: center; gap: var(--space-2);
+    flex-shrink: 0;
+  }
+  .embed-hint-dismiss {
+    margin-left: auto;
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity var(--transition);
+    background: none; border: none; color: var(--color-primary);
+    font-size: var(--text-xs);
+    padding: 0 var(--space-1);
+  }
+  .embed-hint-dismiss:hover { opacity: 1; }
+
+  /* ── LAYOUT ── */
+  .app-body {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  /* ── SIDEBAR ── */
+  aside {
+    width: var(--sidebar-w);
+    flex-shrink: 0;
+    background: var(--color-surface);
+    border-right: 1px solid var(--color-border);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    overflow-x: hidden;
+    z-index: 100;
+  }
+  .sidebar-header {
+    padding: var(--space-4);
+    border-bottom: 1px solid var(--color-border);
+    position: sticky; top: 0;
+    background: var(--color-surface);
+    z-index: 10;
+  }
+  .sidebar-title {
+    font-size: var(--text-xs);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-text-muted);
+    margin-bottom: var(--space-3);
+  }
+  .master-controls {
+    display: flex; gap: var(--space-2);
+  }
+  .btn-xs {
+    font-size: var(--text-xs);
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--color-border);
+    background: var(--color-surface-2);
+    color: var(--color-text-muted);
+    cursor: pointer;
+    transition: color var(--transition), background var(--transition), border-color var(--transition);
+  }
+  .btn-xs:hover {
+    background: var(--color-surface-3);
+    color: var(--color-text);
+    border-color: var(--color-primary);
+  }
+
+  /* ── LAYER GROUPS ── */
+  .layer-group {
+    padding: var(--space-3) var(--space-4);
+    border-bottom: 1px solid var(--color-border);
+  }
+  .group-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-bottom: var(--space-2);
+    cursor: pointer;
+    user-select: none;
+  }
+  .group-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .group-label {
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--color-text);
+    flex: 1;
+  }
+  .group-count {
+    font-size: var(--text-xs);
+    color: var(--color-text-faint);
+    background: var(--color-surface-3);
+    border-radius: var(--radius-sm);
+    padding: 1px 6px;
+  }
+  .group-toggle-all {
+    position: relative;
+    width: 36px; height: 20px;
+    flex-shrink: 0;
+  }
+  .group-toggle-all input { opacity: 0; width: 0; height: 0; position: absolute; }
+  .toggle-track {
+    position: absolute; inset: 0;
+    border-radius: 10px;
+    background: var(--color-surface-3);
+    border: 1px solid var(--color-border);
+    cursor: pointer;
+    transition: background var(--transition), border-color var(--transition);
+  }
+  .toggle-track::after {
+    content: '';
+    position: absolute;
+    top: 2px; left: 2px;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: var(--color-text-muted);
+    transition: transform var(--transition), background var(--transition);
+  }
+  .group-toggle-all input:checked + .toggle-track {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+  }
+  .group-toggle-all input:checked + .toggle-track::after {
+    transform: translateX(16px);
+    background: #fff;
+  }
+
+  /* Layer items */
+  .layer-items { display: flex; flex-direction: column; gap: 2px; }
+  .layer-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: 5px var(--space-2);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: background var(--transition);
+  }
+  .layer-item:hover { background: var(--color-surface-2); }
+  .layer-item input[type=checkbox] {
+    width: 14px; height: 14px;
+    accent-color: var(--color-primary);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .layer-color-swatch {
+    width: 10px; height: 10px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+  .layer-name {
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .layer-item input:checked ~ .layer-name {
+    color: var(--color-text);
+  }
+
+  /* ── INFO PANEL ── */
+  .info-panel {
+    padding: var(--space-3) var(--space-4);
+    background: var(--color-surface-2);
+    border-top: 1px solid var(--color-border);
+    margin-top: auto;
+    flex-shrink: 0;
+  }
+  .info-panel-label {
+    font-size: var(--text-xs);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-text-muted);
+    margin-bottom: var(--space-2);
+  }
+  .info-content {
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+    line-height: 1.5;
+  }
+  .info-content strong { color: var(--color-text); }
+  .info-coords {
+    font-family: 'SF Mono', 'Consolas', monospace;
+    font-size: 10px;
+    color: var(--color-text-faint);
+    margin-top: var(--space-1);
+  }
+
+  /* ── MAP ── */
+  #map {
+    flex: 1;
+    height: 100%;
+  }
+
+  /* Leaflet overrides */
+  .leaflet-popup-content-wrapper {
+    background: var(--color-surface-2) !important;
+    color: var(--color-text) !important;
+    border: 1px solid var(--color-border) !important;
+    border-radius: var(--radius-md) !important;
+    box-shadow: var(--shadow-lg) !important;
+    padding: 0 !important;
+  }
+  .leaflet-popup-content {
+    margin: 0 !important;
+    padding: var(--space-3) var(--space-4) !important;
+    font-family: var(--font-body) !important;
+    font-size: 13px !important;
+    line-height: 1.5 !important;
+    min-width: 180px;
+  }
+  .leaflet-popup-tip { background: var(--color-surface-2) !important; }
+  .leaflet-popup-close-button { color: var(--color-text-muted) !important; top: 6px !important; right: 8px !important; }
+  .popup-title {
+    font-weight: 600;
+    color: var(--color-text);
+    margin-bottom: 4px;
+    font-size: 14px;
+  }
+  .popup-type {
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: var(--radius-sm);
+    display: inline-block;
+    margin-bottom: var(--space-2);
+    font-weight: 500;
+  }
+  .popup-type.sites { background: rgba(239,68,68,0.2); color: #f87171; }
+  .popup-type.rj { background: rgba(59,130,246,0.2); color: #60a5fa; }
+  .popup-type.dr { background: rgba(249,115,22,0.2); color: #fb923c; }
+  .popup-detail { font-size: 11px; color: var(--color-text-muted); }
+  .popup-detail strong { color: var(--color-text); }
+
+  /* Legend */
+  .legend {
+    position: absolute;
+    bottom: var(--space-4);
+    right: var(--space-4);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-3) var(--space-4);
+    z-index: 500;
+    box-shadow: var(--shadow-md);
+    min-width: 160px;
+  }
+  .legend-title {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-text-muted);
+    margin-bottom: var(--space-2);
+  }
+  .legend-item {
+    display: flex; align-items: center; gap: var(--space-2);
+    font-size: 11px; color: var(--color-text-muted);
+    margin-bottom: 4px;
+  }
+  .legend-item:last-child { margin-bottom: 0; }
+  .legend-swatch {
+    width: 16px; height: 10px; border-radius: 2px; flex-shrink: 0;
+  }
+
+  /* Sidebar collapse btn (mobile) */
+  .sidebar-toggle {
+    display: none;
+    position: absolute;
+    top: 60px;
+    left: 0;
+    z-index: 500;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-left: none;
+    padding: var(--space-2) var(--space-1);
+    cursor: pointer;
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+    color: var(--color-text-muted);
+  }
+
+  @media (max-width: 640px) {
+    aside {
+      position: absolute;
+      top: 52px;
+      left: 0;
+      bottom: 0;
+      transform: translateX(-100%);
+      transition: transform var(--transition);
+      z-index: 400;
+    }
+    aside.open { transform: translateX(0); }
+    .sidebar-toggle { display: flex; }
+    #map { width: 100%; }
+    .embed-hint { display: none; }
+  }
+
+  /* Light theme overrides */
+  [data-theme="light"] {
+    --color-bg: #f7f6f2;
+    --color-surface: #f9f8f5;
+    --color-surface-2: #f3f0ec;
+    --color-surface-3: #edeae5;
+    --color-border: rgba(0,0,0,0.08);
+    --color-text: #28251d;
+    --color-text-muted: #7a7974;
+    --color-text-faint: #bab9b4;
+    --color-primary: #01696f;
+    --color-primary-light: rgba(1,105,111,0.08);
+    --color-primary-glow: rgba(1,105,111,0.2);
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+    --shadow-md: 0 4px 16px rgba(0,0,0,0.08);
+    --shadow-lg: 0 12px 40px rgba(0,0,0,0.12);
+  }
+</style>
+</head>
+<body data-theme="dark">
+
+<header>
+  <div class="logo">
+    <svg class="logo-icon" viewBox="0 0 28 28" fill="none" aria-label="DTVRJ Logo">
+      <circle cx="14" cy="14" r="5" stroke="currentColor" stroke-width="1.8"/>
+      <path d="M14 4C8.477 4 4 8.477 4 14s4.477 10 10 10 10-4.477 10-10S19.523 4 14 4z" stroke="currentColor" stroke-width="1.5" stroke-dasharray="3 2"/>
+      <path d="M6 10h16M6 18h16" stroke="currentColor" stroke-width="1.2" opacity="0.4"/>
+      <circle cx="14" cy="14" r="2" fill="currentColor"/>
+    </svg>
+    <span class="logo-text">Retransmissoras DTVRJ</span>
+  </div>
+  <div class="header-divider"></div>
+  <span class="header-sub">Mapa de Cobertura · Rio de Janeiro</span>
+  <button class="theme-btn" data-theme-toggle aria-label="Alternar tema">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+    </svg>
+  </button>
+</header>
+
+<div class="embed-hint" id="embedHint">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+  <span>Para incorporar no <strong>Looker Studio</strong>: hospede este arquivo e adicione via componente <em>URL Embed</em> → cole a URL pública.</span>
+  <button class="embed-hint-dismiss" onclick="document.getElementById('embedHint').style.display='none'">✕ Fechar</button>
+</div>
+
+<div class="app-body">
+  <button class="sidebar-toggle" id="sidebarToggle" aria-label="Abrir painel de camadas">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M9 18l6-6-6-6"/>
+    </svg>
+  </button>
+
+  <aside id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-title">Camadas</div>
+      <div class="master-controls">
+        <button class="btn-xs" onclick="toggleAll(true)">Mostrar todas</button>
+        <button class="btn-xs" onclick="toggleAll(false)">Ocultar todas</button>
+      </div>
+    </div>
+
+    <!-- SITES -->
+    <div class="layer-group">
+      <div class="group-header" onclick="toggleGroupAll('sites')">
+        <div class="group-dot" style="background: var(--c-sites)"></div>
+        <span class="group-label">Sites</span>
+        <span class="group-count" id="count-sites">13</span>
+        <label class="group-toggle-all" onclick="event.stopPropagation()">
+          <input type="checkbox" id="toggle-group-sites" checked onchange="toggleGroup('sites', this.checked)">
+          <span class="toggle-track"></span>
+        </label>
+      </div>
+      <div class="layer-items" id="items-sites"></div>
+    </div>
+
+    <!-- COBERTURAS RJ -->
+    <div class="layer-group">
+      <div class="group-header" onclick="toggleGroupAll('rj')">
+        <div class="group-dot" style="background: var(--c-rj)"></div>
+        <span class="group-label">Coberturas RJ</span>
+        <span class="group-count" id="count-rj">13</span>
+        <label class="group-toggle-all" onclick="event.stopPropagation()">
+          <input type="checkbox" id="toggle-group-rj" checked onchange="toggleGroup('rj', this.checked)">
+          <span class="toggle-track"></span>
+        </label>
+      </div>
+      <div class="layer-items" id="items-rj"></div>
+    </div>
+
+    <!-- COBERTURAS DR -->
+    <div class="layer-group">
+      <div class="group-header" onclick="toggleGroupAll('dr')">
+        <div class="group-dot" style="background: var(--c-dr)"></div>
+        <span class="group-label">Coberturas DR</span>
+        <span class="group-count" id="count-dr">3</span>
+        <label class="group-toggle-all" onclick="event.stopPropagation()">
+          <input type="checkbox" id="toggle-group-dr" checked onchange="toggleGroup('dr', this.checked)">
+          <span class="toggle-track"></span>
+        </label>
+      </div>
+      <div class="layer-items" id="items-dr"></div>
+    </div>
+
+    <!-- INFO PANEL -->
+    <div class="info-panel">
+      <div class="info-panel-label">Selecionado</div>
+      <div class="info-content" id="infoContent">
+        <span style="color: var(--color-text-faint); font-style: italic;">Clique em um elemento no mapa</span>
+      </div>
+    </div>
+  </aside>
+
+  <div id="map"></div>
+</div>
+
+<!-- LEGEND -->
+<div class="legend" id="mapLegend">
+  <div class="legend-title">Legenda</div>
+  <div class="legend-item">
+    <div class="legend-swatch" style="background: var(--c-sites); border-radius: 50%;"></div>
+    <span>Sites (transmissoras)</span>
+  </div>
+  <div class="legend-item">
+    <div class="legend-swatch" style="background: var(--c-rj-stroke); opacity: 0.8;"></div>
+    <span>Cobertura RJ</span>
+  </div>
+  <div class="legend-item">
+    <div class="legend-swatch" style="background: var(--c-dr-stroke); opacity: 0.8;"></div>
+    <span>Cobertura DR (Morin)</span>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────
+const SITES = [
+  { id:'s0', name:'Sumaré',          lat:-22.95012, lng:-43.23324 },
+  { id:'s1', name:'Morin',           lat:-22.53719, lng:-43.14558 },
+  { id:'s2', name:'Mendanha',        lat:-22.82244, lng:-43.51939 },
+  { id:'s3', name:'São Gonçalo',     lat:-22.82346, lng:-43.00665 },
+  { id:'s4', name:'Igreja da Pena',  lat:-22.93983, lng:-43.34427 },
+  { id:'s5', name:'Nova Iguaçu',     lat:-22.72267, lng:-43.46298 },
+  { id:'s6', name:'Rio Sul',         lat:-22.95517, lng:-43.17160 },
+  { id:'s7', name:'Bento Ribeiro',   lat:-22.87166, lng:-43.35837 },
+  { id:'s8', name:'Barra Sul',       lat:-23.00470, lng:-43.42473 },
+  { id:'s9', name:'Itaguaí',         lat:-22.85961, lng:-43.76917 },
+  { id:'s10',name:'Jardim Oceânico', lat:-23.00544, lng:-43.31778 },
+  { id:'s11',name:'Mangaratiba',     lat:-22.97478, lng:-44.03720 },
+  { id:'s12',name:'SBT',             lat:-22.94906, lng:-43.22763 },
+];
+
+const COBERTURAS_RJ = [
+  { id:'ID_0',  name:'Best Server Sumaré 18kW',   isBestServer: true,
+    bounds:[[-23.91338,-44.79006],[-21.81064,-41.97870]], file:'BestServerRJ.png' },
+  { id:'ID_2',  name:'Sumaré (18kW)',
+    bounds:[[-23.82752,-44.18080],[-22.07272,-42.28567]], file:'Sumare.png' },
+  { id:'ID_5',  name:'Mendanha (1200W)',
+    bounds:[[-23.69824,-44.46434],[-21.94664,-42.57445]], file:'Mendanha.png' },
+  { id:'ID_6',  name:'São Gonçalo (600W)',
+    bounds:[[-23.70204,-43.95459],[-21.94489,-42.05870]], file:'SaoGoncalo.png' },
+  { id:'ID_7',  name:'Igreja da Pena (400W)',
+    bounds:[[-23.81662,-44.29111],[-22.06304,-42.39744]], file:'IgrejadaPena.png' },
+  { id:'ID_8',  name:'Nova Iguaçu (280W)',
+    bounds:[[-23.59876,-44.40753],[-21.84659,-42.51843]], file:'NovaIguacu.png' },
+  { id:'ID_9',  name:'Rio Sul (200W)',
+    bounds:[[-23.83291,-44.11957],[-22.07744,-42.22363]], file:'RioSul.png' },
+  { id:'ID_10', name:'Bento Ribeiro (100W)',
+    bounds:[[-23.74836,-44.30462],[-21.99497,-42.41212]], file:'BentoRibeiro.png' },
+  { id:'ID_11', name:'Barra Sul (100W)',
+    bounds:[[-23.88107,-44.37158],[-22.12833,-42.47789]], file:'BarraSul.png' },
+  { id:'ID_12', name:'Itaguaí (80W)',
+    bounds:[[-23.73405,-44.71290],[-21.98518,-42.82544]], file:'Itaguai.png' },
+  { id:'ID_13', name:'Jardim Oceânico (100W)',
+    bounds:[[-23.88240,-44.26526],[-22.12849,-42.37029]], file:'JardimOceanico.png' },
+  { id:'ID_14', name:'Mangaratiba (300W)',
+    bounds:[[-23.84773,-44.98013],[-22.10184,-43.09426]], file:'Mangaratiba.png' },
+  { id:'ID_15', name:'SBT (100W)',
+    bounds:[[-23.55219,-43.87894],[-22.34592,-42.57633]], file:'SBT.png' },
+];
+
+const COBERTURAS_DR = [
+  { id:'ID_1', name:'Best Server DR — Morin 3kW', isBestServer: true,
+    bounds:[[-23.93138,-44.77710],[-21.61262,-42.12804]], file:'BestServerRJDRMorin.png' },
+  { id:'ID_3', name:'Morin 3kW (50% 10m)',
+    bounds:[[-23.41492,-44.09061],[-21.65945,-42.20054]], file:'Morin3kW.png' },
+  { id:'ID_4', name:'Morin 750W (50% 10m)',
+    bounds:[[-23.63311,-44.32433],[-21.43946,-41.96228]], file:'Morin750W.png' },
+];
+
+// ── MAP INIT ──────────────────────────────────────────────────────────────
+const map = L.map('map', { zoomControl: true }).setView([-22.85, -43.3], 9);
+
+// Dark/light tile layers
+const tileDark = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+  attribution: '© OpenStreetMap © CARTO',
+  subdomains: 'abcd', maxZoom: 19
+});
+const tileLight = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+  attribution: '© OpenStreetMap © CARTO',
+  subdomains: 'abcd', maxZoom: 19
+});
+tileDark.addTo(map);
+let isDark = true;
+
+// Layer registries
+const layerMap = {}; // id → leaflet layer
+const groupLayers = { sites: [], rj: [], dr: [] };
+
+// ── HELPERS ───────────────────────────────────────────────────────────────
+function showInfo(html) {
+  document.getElementById('infoContent').innerHTML = html;
+}
+
+function siteIcon(color) {
+  return L.divIcon({
+    className: '',
+    html: `<svg width="24" height="32" viewBox="0 0 24 32" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 0C5.373 0 0 5.373 0 12c0 9 12 20 12 20S24 21 24 12C24 5.373 18.627 0 12 0z" fill="${color}" opacity="0.9"/>
+      <circle cx="12" cy="12" r="5" fill="white" opacity="0.9"/>
+      <circle cx="12" cy="12" r="3" fill="${color}"/>
+    </svg>`,
+    iconSize: [24, 32],
+    iconAnchor: [12, 32],
+    popupAnchor: [0, -32]
+  });
+}
+
+// ── BUILD SITES ──────────────────────────────────────────────────────────
+SITES.forEach(s => {
+  const marker = L.marker([s.lat, s.lng], { icon: siteIcon('#ef4444') });
+  marker.bindPopup(`
+    <div class="popup-title">${s.name}</div>
+    <span class="popup-type sites">Site Transmissora</span>
+    <div class="popup-detail"><strong>Lat:</strong> ${s.lat.toFixed(5)}</div>
+    <div class="popup-detail"><strong>Lng:</strong> ${s.lng.toFixed(5)}</div>
+  `);
+  marker.on('click', () => {
+    showInfo(`<strong>${s.name}</strong><div class="info-coords">Lat: ${s.lat.toFixed(5)}<br>Lng: ${s.lng.toFixed(5)}</div>`);
+  });
+  marker.addTo(map);
+  layerMap[s.id] = marker;
+  groupLayers.sites.push(s.id);
+});
+
+// ── BUILD RJ OVERLAYS ────────────────────────────────────────────────────
+function makeRectangle(data, group) {
+  const isBest = !!data.isBestServer;
+  const fillColor = group === 'rj' ? '#3b82f6' : '#f97316';
+  const opacity = isBest ? 0.18 : 0.10;
+  const strokeOpacity = isBest ? 0.85 : 0.55;
+  const weight = isBest ? 2.5 : 1.5;
+  const dashArray = isBest ? null : '4 4';
+
+  const rect = L.rectangle(data.bounds, {
+    color: fillColor,
+    weight: weight,
+    opacity: strokeOpacity,
+    fillColor: fillColor,
+    fillOpacity: opacity,
+    dashArray: dashArray
+  });
+  const typeLabel = group === 'rj' ? 'Cobertura RJ' : 'Cobertura DR';
+  const typeClass = group === 'rj' ? 'rj' : 'dr';
+  rect.bindPopup(`
+    <div class="popup-title">${data.name}</div>
+    <span class="popup-type ${typeClass}">${typeLabel}</span>
+    <div class="popup-detail"><strong>Arquivo:</strong> ${data.file}</div>
+    <div class="popup-detail"><strong>ID:</strong> ${data.id}</div>
+    ${isBest ? '<div class="popup-detail" style="margin-top:4px;color:var(--color-primary)">▲ Best Serving Network</div>' : ''}
+  `);
+  rect.on('click', () => {
+    showInfo(`<strong>${data.name}</strong><br><span style="color:var(--color-text-muted);font-size:10px">${typeLabel} · ${data.id}</span><div class="info-coords">N:${data.bounds[1][0].toFixed(4)} S:${data.bounds[0][0].toFixed(4)}<br>E:${data.bounds[1][1].toFixed(4)} W:${data.bounds[0][1].toFixed(4)}</div>`);
+  });
+  rect.addTo(map);
+  layerMap[data.id] = rect;
+  groupLayers[group].push(data.id);
+}
+
+COBERTURAS_RJ.forEach(d => makeRectangle(d, 'rj'));
+COBERTURAS_DR.forEach(d => makeRectangle(d, 'dr'));
+
+// ── BUILD SIDEBAR ITEMS ───────────────────────────────────────────────────
+function buildSidebarGroup(containerId, dataArr, groupKey, color) {
+  const container = document.getElementById(containerId);
+  dataArr.forEach((d, i) => {
+    const id = d.id || d.id;
+    const name = d.name;
+    const div = document.createElement('div');
+    div.className = 'layer-item';
+    div.innerHTML = `
+      <input type="checkbox" id="layer-${id}" checked onchange="toggleLayer('${id}', this.checked, '${groupKey}')">
+      <div class="layer-color-swatch" style="background:${color}; ${d.isBestServer ? 'box-shadow:0 0 4px '+color : ''}"></div>
+      <label class="layer-name" for="layer-${id}" title="${name}">${name}</label>
+    `;
+    container.appendChild(div);
+  });
+}
+
+buildSidebarGroup('items-sites', SITES, 'sites', '#ef4444');
+buildSidebarGroup('items-rj',    COBERTURAS_RJ, 'rj', '#3b82f6');
+buildSidebarGroup('items-dr',    COBERTURAS_DR, 'dr', '#f97316');
+
+// ── TOGGLE FUNCTIONS ─────────────────────────────────────────────────────
+function toggleLayer(id, visible, group) {
+  const layer = layerMap[id];
+  if (!layer) return;
+  if (visible) { layer.addTo(map); } else { map.removeLayer(layer); }
+  updateGroupToggle(group);
+}
+
+function toggleGroup(group, visible) {
+  groupLayers[group].forEach(id => {
+    const layer = layerMap[id];
+    const cb = document.getElementById(`layer-${id}`);
+    if (!layer) return;
+    if (visible) { layer.addTo(map); } else { map.removeLayer(layer); }
+    if (cb) cb.checked = visible;
+  });
+}
+
+function toggleGroupAll(group) {
+  const masterCb = document.getElementById(`toggle-group-${group}`);
+  const newState = !masterCb.checked;
+  masterCb.checked = newState;
+  toggleGroup(group, newState);
+}
+
+function updateGroupToggle(group) {
+  const allChecked = groupLayers[group].every(id => {
+    const cb = document.getElementById(`layer-${id}`);
+    return cb && cb.checked;
+  });
+  const masterCb = document.getElementById(`toggle-group-${group}`);
+  if (masterCb) masterCb.checked = allChecked;
+}
+
+function toggleAll(visible) {
+  ['sites','rj','dr'].forEach(g => {
+    const masterCb = document.getElementById(`toggle-group-${g}`);
+    if (masterCb) masterCb.checked = visible;
+    toggleGroup(g, visible);
+  });
+}
+
+// ── THEME TOGGLE ──────────────────────────────────────────────────────────
+(function(){
+  const btn = document.querySelector('[data-theme-toggle]');
+  const root = document.documentElement;
+  function setTheme(dark) {
+    isDark = dark;
+    root.setAttribute('data-theme', dark ? 'dark' : 'light');
+    if (dark) { map.removeLayer(tileLight); tileDark.addTo(map); }
+    else       { map.removeLayer(tileDark); tileLight.addTo(map); }
+    btn.innerHTML = dark
+      ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>'
+      : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>';
+  }
+  setTheme(true);
+  btn.addEventListener('click', () => setTheme(!isDark));
+})();
+
+// ── MOBILE SIDEBAR ────────────────────────────────────────────────────────
+const sidebar = document.getElementById('sidebar');
+const toggleBtn = document.getElementById('sidebarToggle');
+let sidebarOpen = false;
+toggleBtn.addEventListener('click', () => {
+  sidebarOpen = !sidebarOpen;
+  sidebar.classList.toggle('open', sidebarOpen);
+  toggleBtn.style.left = sidebarOpen ? (getComputedStyle(document.documentElement).getPropertyValue('--sidebar-w').trim()) : '0';
+  toggleBtn.innerHTML = sidebarOpen
+    ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>'
+    : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>';
+});
+
+// Move legend inside map container
+document.getElementById('map').style.position = 'relative';
+const legend = document.getElementById('mapLegend');
+document.querySelector('.app-body').appendChild(legend);
+Object.assign(legend.style, {
+  position: 'absolute',
+  bottom: '16px',
+  right: '16px',
+  zIndex: '500'
+});
+</script>
+</body>
+</html>
