@@ -19,7 +19,7 @@
     --sidebar-w: 280px;
     --color-bg: #0f0f10; --color-surface: #161618; --color-surface-2: #1c1c1f; --color-surface-3: #232327;
     --color-border: rgba(255,255,255,0.08); --color-text: #e8e8ea; --color-text-muted: #8a8a90; --color-text-faint: #4a4a52;
-    --color-primary: #4f98a3; --color-primary-light: rgba(79,152,163,0.15); --color-primary-glow: rgba(79,152,163,0.3);
+    --color-primary: #4f98a3; --color-primary-light: rgba(79,152,163,0.15);
     --shadow-sm: 0 1px 3px rgba(0,0,0,0.4); --shadow-md: 0 4px 16px rgba(0,0,0,0.5); --shadow-lg: 0 12px 40px rgba(0,0,0,0.6);
     --c-sites: #ef4444; --c-rj: #3b82f6; --c-rj-fill: rgba(59,130,246,0.12); --c-rj-stroke: rgba(59,130,246,0.6);
     --c-dr: #f97316; --c-dr-fill: rgba(249,115,22,0.12); --c-dr-stroke: rgba(249,115,22,0.6);
@@ -43,55 +43,63 @@
   .btn-xs { font-size: var(--text-xs); padding: var(--space-1) var(--space-2); border-radius: var(--radius-sm); border: 1px solid var(--color-border); background: var(--color-surface-2); color: var(--color-text-muted); cursor: pointer; transition: color var(--transition), background var(--transition), border-color var(--transition); }
   .btn-xs:hover { background: var(--color-surface-3); color: var(--color-text); border-color: var(--color-primary); }
 
-  /* ── Grupo / Pasta ── */
-  .layer-group { border-bottom: 1px solid var(--color-border); }
-  .group-header {
+  /* ── Pasta pai (nível 0) ── */
+  .tree-root { border-bottom: 1px solid var(--color-border); }
+  .tree-root-header {
     display: flex; align-items: center; gap: var(--space-2);
     padding: var(--space-3) var(--space-4);
+    background: var(--color-surface-2);
+    user-select: none;
+  }
+  .tree-root-icon { font-size: 15px; flex-shrink: 0; }
+  .tree-root-label { font-size: var(--text-xs); font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--color-text); flex: 1; }
+  .tree-root-body { padding: var(--space-2) 0 var(--space-2); }
+
+  /* ── Subpasta (nível 1) ── */
+  .layer-group { margin: 1px var(--space-2); border-radius: var(--radius-md); overflow: hidden; }
+  .group-header {
+    display: flex; align-items: center; gap: var(--space-2);
+    padding: 6px var(--space-3);
     cursor: pointer; user-select: none;
+    border-radius: var(--radius-md);
     transition: background var(--transition);
   }
   .group-header:hover { background: var(--color-surface-2); }
-  /* seta de expandir */
   .group-chevron {
-    width: 14px; height: 14px; flex-shrink: 0;
+    width: 13px; height: 13px; flex-shrink: 0;
     color: var(--color-text-faint);
     transition: transform 220ms cubic-bezier(0.16,1,0.3,1);
   }
   .layer-group.open .group-chevron { transform: rotate(90deg); }
   .group-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-  .group-label { font-size: var(--text-sm); font-weight: 600; color: var(--color-text); flex: 1; }
-  .group-count { font-size: var(--text-xs); color: var(--color-text-faint); background: var(--color-surface-3); border-radius: var(--radius-sm); padding: 1px 6px; }
-  .group-toggle-all { position: relative; width: 36px; height: 20px; flex-shrink: 0; }
+  .group-label { font-size: var(--text-xs); font-weight: 600; color: var(--color-text); flex: 1; }
+  .group-count { font-size: 10px; color: var(--color-text-faint); background: var(--color-surface-3); border-radius: var(--radius-sm); padding: 1px 5px; }
+  .group-toggle-all { position: relative; width: 32px; height: 18px; flex-shrink: 0; }
   .group-toggle-all input { opacity: 0; width: 0; height: 0; position: absolute; }
-  .toggle-track { position: absolute; inset: 0; border-radius: 10px; background: var(--color-surface-3); border: 1px solid var(--color-border); cursor: pointer; transition: background var(--transition), border-color var(--transition); }
-  .toggle-track::after { content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: var(--color-text-muted); transition: transform var(--transition), background var(--transition); }
+  .toggle-track { position: absolute; inset: 0; border-radius: 9px; background: var(--color-surface-3); border: 1px solid var(--color-border); cursor: pointer; transition: background var(--transition), border-color var(--transition); }
+  .toggle-track::after { content: ''; position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; border-radius: 50%; background: var(--color-text-muted); transition: transform var(--transition), background var(--transition); }
   .group-toggle-all input:checked + .toggle-track { background: var(--color-primary); border-color: var(--color-primary); }
-  .group-toggle-all input:checked + .toggle-track::after { transform: translateX(16px); background: #fff; }
+  .group-toggle-all input:checked + .toggle-track::after { transform: translateX(14px); background: #fff; }
 
   /* corpo recolhível */
-  .group-body {
-    display: grid;
-    grid-template-rows: 0fr;
-    transition: grid-template-rows 220ms cubic-bezier(0.16,1,0.3,1);
-  }
+  .group-body { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 220ms cubic-bezier(0.16,1,0.3,1); }
   .layer-group.open .group-body { grid-template-rows: 1fr; }
-  .group-body-inner { overflow: hidden; padding: 0 var(--space-4) 0; }
-  .layer-group.open .group-body-inner { padding-bottom: var(--space-3); }
+  .group-body-inner { overflow: hidden; padding: 0 var(--space-2) 0 calc(var(--space-2) + 13px + var(--space-2)); }
+  .layer-group.open .group-body-inner { padding-bottom: var(--space-2); }
 
-  .layer-items { display: flex; flex-direction: column; gap: 2px; }
-  .layer-item { display: flex; align-items: center; gap: var(--space-2); padding: 5px var(--space-2); border-radius: var(--radius-sm); transition: background var(--transition); }
+  .layer-items { display: flex; flex-direction: column; gap: 1px; }
+  .layer-item { display: flex; align-items: center; gap: var(--space-2); padding: 4px var(--space-2); border-radius: var(--radius-sm); transition: background var(--transition); }
   .layer-item:hover { background: var(--color-surface-2); }
-  .layer-item input[type=checkbox] { width: 14px; height: 14px; accent-color: var(--color-primary); cursor: pointer; flex-shrink: 0; }
-  .layer-color-swatch { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+  .layer-item input[type=checkbox] { width: 13px; height: 13px; accent-color: var(--color-primary); cursor: pointer; flex-shrink: 0; }
+  .layer-color-swatch { width: 9px; height: 9px; border-radius: 2px; flex-shrink: 0; }
   .layer-name { font-size: var(--text-xs); color: var(--color-text-muted); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .layer-item input[type=checkbox]:checked ~ .layer-name { color: var(--color-text); }
-  .layer-opacity-row { display: flex; align-items: center; gap: var(--space-2); padding: 2px var(--space-2) 6px calc(var(--space-2) + 14px + var(--space-2) + 10px + var(--space-2)); opacity: 0.4; pointer-events: none; transition: opacity var(--transition); }
+  .layer-opacity-row { display: flex; align-items: center; gap: var(--space-2); padding: 2px var(--space-2) 4px calc(var(--space-2) + 13px + var(--space-2) + 9px + var(--space-2)); opacity: 0.4; pointer-events: none; transition: opacity var(--transition); }
   .layer-opacity-row.active { opacity: 1; pointer-events: auto; }
   .opacity-slider { flex: 1; -webkit-appearance: none; appearance: none; height: 3px; border-radius: 2px; background: var(--color-surface-3); outline: none; cursor: pointer; }
-  .opacity-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 12px; height: 12px; border-radius: 50%; background: var(--color-primary); cursor: pointer; border: 2px solid var(--color-surface); box-shadow: 0 0 0 1px var(--color-primary); }
-  .opacity-slider::-moz-range-thumb { width: 12px; height: 12px; border-radius: 50%; background: var(--color-primary); cursor: pointer; border: 2px solid var(--color-surface); }
-  .opacity-label { font-size: 10px; font-family: 'SF Mono','Consolas',monospace; color: var(--color-text-faint); min-width: 28px; text-align: right; }
+  .opacity-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 11px; height: 11px; border-radius: 50%; background: var(--color-primary); cursor: pointer; border: 2px solid var(--color-surface); box-shadow: 0 0 0 1px var(--color-primary); }
+  .opacity-slider::-moz-range-thumb { width: 11px; height: 11px; border-radius: 50%; background: var(--color-primary); cursor: pointer; border: 2px solid var(--color-surface); }
+  .opacity-label { font-size: 10px; font-family: 'SF Mono','Consolas',monospace; color: var(--color-text-faint); min-width: 26px; text-align: right; }
 
   .info-panel { padding: var(--space-3) var(--space-4); background: var(--color-surface-2); border-top: 1px solid var(--color-border); margin-top: auto; flex-shrink: 0; }
   .info-panel-label { font-size: var(--text-xs); font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-text-muted); margin-bottom: var(--space-2); }
@@ -132,7 +140,7 @@
   [data-theme="light"] {
     --color-bg: #f7f6f2; --color-surface: #f9f8f5; --color-surface-2: #f3f0ec; --color-surface-3: #edeae5;
     --color-border: rgba(0,0,0,0.08); --color-text: #28251d; --color-text-muted: #7a7974; --color-text-faint: #bab9b4;
-    --color-primary: #01696f; --color-primary-light: rgba(1,105,111,0.08); --color-primary-glow: rgba(1,105,111,0.2);
+    --color-primary: #01696f; --color-primary-light: rgba(1,105,111,0.08);
     --shadow-sm: 0 1px 3px rgba(0,0,0,0.06); --shadow-md: 0 4px 16px rgba(0,0,0,0.08); --shadow-lg: 0 12px 40px rgba(0,0,0,0.12);
   }
 </style>
@@ -169,62 +177,73 @@
       </div>
     </div>
 
-    <!-- Sites -->
-    <div class="layer-group open" id="group-sites">
-      <div class="group-header" onclick="toggleFolderOpen('sites')">
-        <svg class="group-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
-        <div class="group-dot" style="background:var(--c-sites)"></div>
-        <span class="group-label">Sites</span>
-        <span class="group-count">13</span>
-        <label class="group-toggle-all" onclick="event.stopPropagation()">
-          <input type="checkbox" id="toggle-group-sites" checked onchange="toggleGroup('sites', this.checked)">
-          <span class="toggle-track"></span>
-        </label>
+    <!-- █ Pasta-pai: Rio de Janeiro (sempre aberta) -->
+    <div class="tree-root">
+      <div class="tree-root-header">
+        <span class="tree-root-icon">&#128506;</span>
+        <span class="tree-root-label">Rio de Janeiro</span>
       </div>
-      <div class="group-body">
-        <div class="group-body-inner">
-          <div class="layer-items" id="items-sites"></div>
-        </div>
-      </div>
-    </div>
+      <div class="tree-root-body">
 
-    <!-- Coberturas RJ -->
-    <div class="layer-group open" id="group-rj">
-      <div class="group-header" onclick="toggleFolderOpen('rj')">
-        <svg class="group-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
-        <div class="group-dot" style="background:var(--c-rj)"></div>
-        <span class="group-label">Coberturas RJ</span>
-        <span class="group-count">13</span>
-        <label class="group-toggle-all" onclick="event.stopPropagation()">
-          <input type="checkbox" id="toggle-group-rj" onchange="toggleGroup('rj', this.checked)">
-          <span class="toggle-track"></span>
-        </label>
-      </div>
-      <div class="group-body">
-        <div class="group-body-inner">
-          <div class="layer-items" id="items-rj"></div>
+        <!-- Subpasta: Sites (recolhida) -->
+        <div class="layer-group" id="group-sites">
+          <div class="group-header" onclick="toggleFolderOpen('sites')">
+            <svg class="group-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+            <div class="group-dot" style="background:var(--c-sites)"></div>
+            <span class="group-label">Sites</span>
+            <span class="group-count">13</span>
+            <label class="group-toggle-all" onclick="event.stopPropagation()">
+              <input type="checkbox" id="toggle-group-sites" checked onchange="toggleGroup('sites', this.checked)">
+              <span class="toggle-track"></span>
+            </label>
+          </div>
+          <div class="group-body">
+            <div class="group-body-inner">
+              <div class="layer-items" id="items-sites"></div>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
 
-    <!-- Coberturas DR -->
-    <div class="layer-group open" id="group-dr">
-      <div class="group-header" onclick="toggleFolderOpen('dr')">
-        <svg class="group-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
-        <div class="group-dot" style="background:var(--c-dr)"></div>
-        <span class="group-label">Coberturas DR</span>
-        <span class="group-count">3</span>
-        <label class="group-toggle-all" onclick="event.stopPropagation()">
-          <input type="checkbox" id="toggle-group-dr" onchange="toggleGroup('dr', this.checked)">
-          <span class="toggle-track"></span>
-        </label>
-      </div>
-      <div class="group-body">
-        <div class="group-body-inner">
-          <div class="layer-items" id="items-dr"></div>
+        <!-- Subpasta: Coberturas RJ (recolhida) -->
+        <div class="layer-group" id="group-rj">
+          <div class="group-header" onclick="toggleFolderOpen('rj')">
+            <svg class="group-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+            <div class="group-dot" style="background:var(--c-rj)"></div>
+            <span class="group-label">Coberturas RJ</span>
+            <span class="group-count">13</span>
+            <label class="group-toggle-all" onclick="event.stopPropagation()">
+              <input type="checkbox" id="toggle-group-rj" onchange="toggleGroup('rj', this.checked)">
+              <span class="toggle-track"></span>
+            </label>
+          </div>
+          <div class="group-body">
+            <div class="group-body-inner">
+              <div class="layer-items" id="items-rj"></div>
+            </div>
+          </div>
         </div>
+
+        <!-- Subpasta: Coberturas DR (recolhida) -->
+        <div class="layer-group" id="group-dr">
+          <div class="group-header" onclick="toggleFolderOpen('dr')">
+            <svg class="group-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+            <div class="group-dot" style="background:var(--c-dr)"></div>
+            <span class="group-label">Coberturas DR</span>
+            <span class="group-count">3</span>
+            <label class="group-toggle-all" onclick="event.stopPropagation()">
+              <input type="checkbox" id="toggle-group-dr" onchange="toggleGroup('dr', this.checked)">
+              <span class="toggle-track"></span>
+            </label>
+          </div>
+          <div class="group-body">
+            <div class="group-body-inner">
+              <div class="layer-items" id="items-dr"></div>
+            </div>
+          </div>
+        </div>
+
       </div>
-    </div>
+    </div><!-- /tree-root -->
 
     <div class="info-panel">
       <div class="info-panel-label">Selecionado</div>
@@ -280,8 +299,8 @@ const COBERTURAS_RJ = [
 ];
 const COBERTURAS_DR = [
   { id:'ID_1', name:'Best Server DR — Morin 3kW', isBestServer:true, bounds:[[-23.93138,-44.77710],[-21.61262,-42.12804]], file:'BestServerRJDRMorin.png' },
-  { id:'ID_3', name:'Morin 3kW (50% 10m)',         bounds:[[-23.41492,-44.09061],[-21.65945,-42.20054]], file:'Morin3kW.png' },
-  { id:'ID_4', name:'Morin 750W (50% 10m)',         bounds:[[-23.63311,-44.32433],[-21.43946,-41.96228]], file:'Morin750W.png' },
+  { id:'ID_3', name:'Morin 3kW (50% 10m)',  bounds:[[-23.41492,-44.09061],[-21.65945,-42.20054]], file:'Morin3kW.png' },
+  { id:'ID_4', name:'Morin 750W (50% 10m)', bounds:[[-23.63311,-44.32433],[-21.43946,-41.96228]], file:'Morin750W.png' },
 ];
 
 const map = L.map('map',{zoomControl:true}).setView([-22.85,-43.3],9);
@@ -294,7 +313,6 @@ const opacityMap  = {};
 const groupLayers = { sites:[], rj:[], dr:[] };
 function showInfo(html){ document.getElementById('infoContent').innerHTML = html; }
 
-/* Expande / recolhe pasta */
 function toggleFolderOpen(group) {
   document.getElementById('group-' + group).classList.toggle('open');
 }
